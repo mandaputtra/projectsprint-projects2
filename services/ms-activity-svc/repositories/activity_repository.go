@@ -22,11 +22,11 @@ func (r *ActivityRepository) Create(activity *models.Activity) (*models.Activity
 	return activity, nil
 }
 
-func (r *ActivityRepository) GetAll(limit, offset int) ([]*models.Activity, error) {
+func (r *ActivityRepository) GetAll(limit, offset int, userId string) ([]*models.Activity, error) {
 	var activities []*models.Activity
 	query := r.db.Limit(limit).Offset(offset)
 
-	err := query.Find(&activities).Error
+	err := query.Find(&activities, "user_id = ?", userId).Error
 	return activities, err
 }
 
@@ -42,14 +42,14 @@ func (r *ActivityRepository) GetAll(limit, offset int) ([]*models.Activity, erro
 // 	return activitys, nil
 // }
 
-// func (r *ActivityRepository) GetOne(id string) (*models.Activity, error) {
-// 	var activity models.Activity
-// 	err := r.db.First(&activity, "id = ?", id).Error
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return &activity, nil
-// }
+func (r *ActivityRepository) GetOne(id, userId string) (*models.Activity, error) {
+	var activity models.Activity
+	err := r.db.First(&activity, "id = ? AND user_id = ?", id, userId).Error
+	if err != nil {
+		return nil, err
+	}
+	return &activity, nil
+}
 
 // func (r *ActivityRepository) UpdateActivity(data *models.Activity) (*models.Activity, error) {
 

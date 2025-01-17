@@ -31,3 +31,12 @@ func (r *ActivityTypeRepository) GetOne(id string) (*models.ActivityType, error)
 	}
 	return &activityType, nil
 }
+
+func (r *ActivityTypeRepository) GetOneByName(name string) (*models.ActivityType, error) {
+	var activityType models.ActivityType
+	err := r.db.First(&activityType, "activity_type = ?", name).Error
+	if err != nil {
+		return nil, err
+	}
+	return &activityType, nil
+}

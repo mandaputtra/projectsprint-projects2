@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/dtos"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/services"
 )
 
@@ -18,34 +19,33 @@ func NewActivityController(service *services.ActivityService) *ActivityControlle
 	}
 }
 
-// Handler untuk membuat department baru
-// func (c *ActivityController) Create(ctx *gin.Context) {
-// 	var activityDTO dtos.ActivityRequestDTO
+func (c *ActivityController) Create(ctx *gin.Context) {
+	var activityDTO dtos.ActivityRequestDTO
 
-// 	// Bind JSON request body ke struct department
-// 	if err := ctx.ShouldBindJSON(&activityDTO); err != nil {
-// 		ctx.JSON(http.StatusBadRequest, gin.H{
-// 			"error": "Invalid request body",
-// 		})
-// 		return
-// 	}
+	// Bind JSON request body ke struct department
+	if err := ctx.ShouldBindJSON(&activityDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
 
-// 	// Panggil service untuk membuat department
-// 	createdDepartment, err := c.service.Create(&activityDTO, ctx)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, gin.H{
-// 			"error": "Failed to create department",
-// 		})
-// 		return
-// 	}
+	createdActivity, err := c.service.Create(&activityDTO, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create activity",
+		})
+		return
+	}
 
-// 	// Kirim response dengan data department yang berhasil dibuat
-// 	ctx.JSON(http.StatusCreated, createdDepartment)
-// }
+	// Kirim response dengan data department yang berhasil dibuat
+	ctx.JSON(http.StatusCreated, createdActivity)
+}
 
 func (c *ActivityController) GetAllActivities(ctx *gin.Context) {
 	limitStr := ctx.DefaultQuery("limit", "10")
 	offsetStr := ctx.DefaultQuery("offset", "0")
+	userId, _ := ctx.Get("userId")
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
@@ -59,7 +59,7 @@ func (c *ActivityController) GetAllActivities(ctx *gin.Context) {
 		offset = 0
 	}
 
-	activities, err := c.service.GetAll(limit, offset)
+	activities, err := c.service.GetAll(limit, offset, userId.(string))
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch activities"})
@@ -73,48 +73,42 @@ func (c *ActivityController) GetAllActivities(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, activities)
 }
 
-// func (c *ActivityController) GetOneDepartment(ctx *gin.Context) {
-// 	checkIdWithCredential(ctx)
-// 	if ctx.IsAborted() {
-// 		return
-// 	}
+func (c *ActivityController) GetOneActivity(ctx *gin.Context) {
+	id := ctx.Param("id")
+	userId, _ := ctx.Get("userId")
 
-// 	department, err := c.service.GetOne(id)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ID is not found"})
-// 		return
-// 	}
-// 	ctx.JSON(http.StatusOK, department)
-// }
+	activity, err := c.service.GetOne(id, userId.(string))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ID is not found"})
+		return
+	}
+	ctx.JSON(http.StatusOK, activity)
+}
 
-// func (c *ActivityController) UpdateOneDepartment(ctx *gin.Context) {
-// 	checkIdWithCredential(ctx)
-// 	if ctx.IsAborted() {
-// 		return
-// 	}
+func (c *ActivityController) UpdateActivity(ctx *gin.Context) {
+	id := ctx.Param("id")
+	// Bind input dari request body ke DTO
+	var activityDTO dtos.ActivityRequestDTO
+	if err := ctx.ShouldBindJSON(&activityDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
 
-// 	// Bind input dari request body ke DTO
-// 	var activityDTO dtos.ActivityRequestDTO
-// 	if err := ctx.ShouldBindJSON(&activityDTO); err != nil {
-// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-// 		return
-// 	}
+	// Panggil service untuk update
+	updatedActivity, err := c.service.UpdateOneDepartment(id, &activityDTO)
+	if err != nil {
+		if err.Error() == "activity not found" {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Activity with the given ID not found"})
+			return
+		}
+		// Error lain saat update
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update Activity"})
+		return
+	}
 
-// 	// Panggil service untuk update
-// 	updatedDepartment, err := c.service.UpdateOneDepartment(id, &activityDTO)
-// 	if err != nil {
-// 		if err.Error() == "department not found" {
-// 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Department with the given ID not found"})
-// 			return
-// 		}
-// 		// Error lain saat update
-// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update department"})
-// 		return
-// 	}
-
-// 	// Berhasil update
-// 	ctx.JSON(http.StatusOK, updatedDepartment)
-// }
+	// Berhasil update
+	ctx.JSON(http.StatusOK, updatedActivity)
+}
 
 // func (c *ActivityController) UpdateDepartmentId(ctx *gin.Context) {
 // 	var body map[string]interface{}
