@@ -10,12 +10,15 @@ import (
 
 type User struct {
 	gorm.Model
-	Name            string
-	Password        string `gorm:"not null"`
-	Email           string `gorm:"unique;not null"`
-	UserImageUri    string
-	CompanyName     string
-	CompanyImageUri string
+	Email       string `gorm:"unique;not null"`
+	Password    string `gorm:"not null"`
+	Preferences string
+	WeightUnit  string
+	HeightUnit  string
+	Weight      float64
+	Height      float64
+	Name        string
+	ImageUri    string
 }
 
 // Setup database

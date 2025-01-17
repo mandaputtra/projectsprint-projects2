@@ -17,15 +17,17 @@ import (
 type UserCreateOrLoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8,max=32"`
-	Action   string `json:"action" binding:"required,oneof=create login"`
 }
 
 type UserUpdateRequest struct {
-	Name            string `json:"name" binding:"min=4,max=52"`
-	Email           string `json:"email" binding:"required,email"`
-	UserImageUri    string `json:"userImageUri" binding:"required,uri"`
-	CompanyName     string `json:"companyName" binding:"min=4,max=52"`
-	CompanyImageUri string `json:"companyImageUri" binding:"required,uri"`
+	Name        string  `json:"name" binding:"min=4,max=52"`
+	Email       string  `json:"email" binding:"required,email"`
+	Preferences string  `json:"userImageUri" binding:"required,uri"`
+	WeightUnit  string  `json:"companyName" binding:"min=4,max=52"`
+	HeightUnit  string  `json:"companyImageUri" binding:"required,uri"`
+	Height      float64 `json:"height" binding:"required"`
+	Weight      float64 `json:"weight" binding:"required"`
+	ImageUri    string  `json:"imageUri" binding:"required,uri"`
 }
 
 type APIEnv struct {
@@ -42,7 +44,46 @@ func validateURIWithTLD(uri string) bool {
 }
 
 // Services
-func (a *APIEnv) CreateOrLogin(c *gin.Context) {
+func (a *APIEnv) Login(c *gin.Context) {
+	db := a.DB
+	cfg := config.EnvironmentConfig()
+	var user database.User
+	var userRequest UserCreateOrLoginRequest
+
+	if err := c.ShouldBindJSON(&userRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	db.Where("email =?", userRequest.Email).First(&user)
+	if user.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid email or password"})
+		return
+	}
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userRequest.Password))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email": user.Email,
+		"id":    user.ID,
+	})
+	tokenString, err := token.SignedString([]byte(
+		cfg.JWT_SECRET,
+	))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"email": user.Email,
+		"token": tokenString,
+	})
+	return
+}
+
+func (a *APIEnv) Register(c *gin.Context) {
 	db := a.DB
 	cfg := config.EnvironmentConfig()
 	var userRequest UserCreateOrLoginRequest
@@ -51,88 +92,55 @@ func (a *APIEnv) CreateOrLogin(c *gin.Context) {
 		return
 	}
 
-	// Create or log in the user based on the action
-	switch userRequest.Action {
-	case "create":
-		user := database.User{Email: userRequest.Email, Password: userRequest.Password}
-		// Encrypt the password before saving it to the database
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userRequest.Password), bcrypt.DefaultCost)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to encrypt password"})
-			return
-		}
-		user.Password = string(hashedPassword)
-		result := db.Create(&user)
-
-		if result.Error != nil {
-			c.JSON(http.StatusConflict, gin.H{
-				"error": result.Error,
-			})
-			return
-		}
-
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"email": user.Email,
-		})
-
-		tokenString, err := token.SignedString([]byte(cfg.JWT_SECRET))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusCreated, gin.H{
-			"email": user.Email,
-			"token": tokenString,
-		})
-		return
-	case "login":
-		var user database.User
-
-		db.Where("email =?", userRequest.Email).First(&user)
-		if user.ID == 0 {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Invalid email or password"})
-			return
-		}
-		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userRequest.Password))
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
-			return
-		}
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"email": user.Email,
-		})
-		tokenString, err := token.SignedString([]byte(
-			cfg.JWT_SECRET,
-		))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"email": user.Email,
-			"token": tokenString,
-		})
-		return
-	default:
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Bad Action"})
+	user := database.User{Email: userRequest.Email, Password: userRequest.Password}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userRequest.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to encrypt password"})
 		return
 	}
+	user.Password = string(hashedPassword)
+	result := db.Create(&user)
+
+	if result.Error != nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": result.Error,
+		})
+		return
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email": user.Email,
+		"id":    user.ID,
+	})
+
+	tokenString, err := token.SignedString([]byte(cfg.JWT_SECRET))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"email": user.Email,
+		"token": tokenString,
+	})
+	return
 }
 
-func (a *APIEnv) GetUsers(c *gin.Context) {
+func (a *APIEnv) GetUser(c *gin.Context) {
 	db := a.DB
-	email := c.GetString("email")
+	id := c.GetString("id")
 
 	var user database.User
-	db.Where("email = ?", email).First(&user)
+	db.Where("id = ?", id).First(&user)
 
 	c.JSON(http.StatusOK, gin.H{
-		"email":           user.Email,
-		"name":            user.Name,
-		"userImageUri":    user.UserImageUri,
-		"companyName":     user.CompanyName,
-		"companyImageUri": user.CompanyImageUri,
+		"preference": user.Preferences,
+		"weightUnit": user.WeightUnit,
+		"heightUnit": user.HeightUnit,
+		"weight":     user.Weight,
+		"height":     user.Height,
+		"name":       user.Name,
+		"imageUri":   user.ImageUri,
 	})
 }
 
@@ -145,11 +153,6 @@ func (a *APIEnv) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if !validateURIWithTLD(userRequest.UserImageUri) || !validateURIWithTLD(userRequest.CompanyImageUri) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "bad url"})
-		return
-	}
-
 	email := c.GetString("email")
 
 	var user database.User
@@ -158,11 +161,22 @@ func (a *APIEnv) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	user.Name = userRequest.Name
-	user.UserImageUri = userRequest.UserImageUri
-	user.CompanyName = userRequest.CompanyName
-	user.CompanyImageUri = userRequest.CompanyImageUri
-	user.Email = userRequest.Email
+	if user.Name != "" {
+		user.Name = userRequest.Name
+	}
+
+	if user.ImageUri != "" {
+		if !validateURIWithTLD(userRequest.ImageUri) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "bad image uri url"})
+			return
+		}
+	}
+
+	user.Preferences = userRequest.Preferences
+	user.WeightUnit = userRequest.WeightUnit
+	user.HeightUnit = userRequest.HeightUnit
+	user.Weight = userRequest.Weight
+	user.Height = userRequest.Height
 
 	if err := db.Save(&user).Error; err != nil {
 		if err != nil && strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
@@ -174,10 +188,12 @@ func (a *APIEnv) UpdateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"email":           user.Email,
-		"name":            user.Name,
-		"userImageUri":    user.UserImageUri,
-		"companyName":     user.CompanyName,
-		"companyImageUri": user.CompanyImageUri,
+		"preference": user.Preferences,
+		"weightUnit": user.WeightUnit,
+		"heightUnit": user.HeightUnit,
+		"weight":     user.Weight,
+		"height":     user.Height,
+		"name":       user.Name,
+		"imageUri":   user.ImageUri,
 	})
 }
