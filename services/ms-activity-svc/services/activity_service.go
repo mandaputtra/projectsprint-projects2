@@ -5,51 +5,68 @@ import (
 	// "fmt"
 
 	// "github.com/gin-gonic/gin"
+	"errors"
+
+	"github.com/gin-gonic/gin"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/dtos"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/mappers"
+	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/models"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/repositories"
+	"gorm.io/gorm"
 	// "gorm.io/gorm"
 )
 
 type ActivityService struct {
-	repo *repositories.ActivityRepository
+	repo             *repositories.ActivityRepository
+	activityTypeRepo *repositories.ActivityTypeRepository
 }
 
-func NewActivityService(repo *repositories.ActivityRepository) *ActivityService {
+func NewActivityService(repo *repositories.ActivityRepository, activityTypeRepo *repositories.ActivityTypeRepository) *ActivityService {
 	return &ActivityService{
-		repo: repo,
+		repo:             repo,
+		activityTypeRepo: activityTypeRepo,
 	}
 }
 
-// func (s *DepartmentService) Create(activityReqDTO *dtos.ActivityRequestDTO, ctx *gin.Context) (*dtos.ActivityResponseDTO, error) {
+func (s *ActivityService) Create(activityReqDTO *dtos.ActivityRequestDTO, ctx *gin.Context) (*dtos.ActivityResponseDTO, error) {
 
-// 	newDepartment := mappers.MapRequestToActivityModel(activityReqDTO)
+	activityType, err := s.activityTypeRepo.GetOneByName(activityReqDTO.ActivityType)
 
-// 	email, ok := ctx.Get("email")
-// 	if !ok {
-// 		return nil, errors.New("email not found in context")
-// 	}
+	if err != nil {
+		return nil, err
+	}
 
-// 	emailStr, ok := email.(string)
-// 	if !ok {
-// 		return nil, errors.New("email in context is not a valid string")
-// 	}
+	userId, _ := ctx.Get("userId")
 
-// 	randomString := utils.GenerateRandomString(5)
-// 	newDepartment.ID = emailStr + "-" + randomString
+	newActivityModel := &models.Activity{
+		UserID:            userId.(string),
+		ActivityTypeID:    activityType.ID,
+		ActivityTypeName:  activityType.ActivityType,
+		CaloriesBurned:    activityType.Calories * activityReqDTO.DurationInMinutes,
+		DurationInMinutes: activityReqDTO.DurationInMinutes,
+		DoneAt:            activityReqDTO.DoneAt,
+	}
 
-// 	activity, err := s.repo.Create(newDepartment)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	activity, err := s.repo.Create(newActivityModel)
+	if err != nil {
+		return nil, err
+	}
 
-// 	activityResponseDTO := mappers.MapActivityModelToResponse(activity)
+	activityResponseDTO := &dtos.ActivityResponseDTO{
+		ActivityId:        activity.ID,
+		ActivityType:      activity.ActivityTypeName,
+		DoneAt:            activity.DoneAt,
+		DurationInMinutes: activity.DurationInMinutes,
+		CaloriesBurned:    activity.CaloriesBurned,
+		CreatedAt:         activity.CreatedAt.String(),
+		UpdatedAt:         activity.UpdatedAt.String(),
+	}
 
-// 	return activityResponseDTO, nil
-// }
+	return activityResponseDTO, nil
+}
 
-func (s *ActivityService) GetAll(limit, offset int) ([]*dtos.ActivityResponseDTO, error) {
-	activities, err := s.repo.GetAll(limit, offset)
+func (s *ActivityService) GetAll(limit, offset int, userId string) ([]*dtos.ActivityResponseDTO, error) {
+	activities, err := s.repo.GetAll(limit, offset, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -57,44 +74,43 @@ func (s *ActivityService) GetAll(limit, offset int) ([]*dtos.ActivityResponseDTO
 	// Map models to response DTOs
 	var activityDTOs []*dtos.ActivityResponseDTO
 	for _, activity := range activities {
+
 		activityDTOs = append(activityDTOs, mappers.MapActivityModelToResponse(activity))
 	}
 
 	return activityDTOs, nil
 }
 
-// func (s *DepartmentService) GetOne(id string) (*dtos.ActivityResponseDTO, error) {
-// 	activity, err := s.repo.GetOne(id)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (s *ActivityService) GetOne(id, userId string) (*dtos.ActivityResponseDTO, error) {
+	activity, err := s.repo.GetOne(id, userId)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return mappers.MapActivityModelToResponse(activity), nil
-// }
+	return mappers.MapActivityModelToResponse(activity), nil
+}
 
-// func (s *DepartmentService) UpdateOneDepartment(id string, activityDTO *dtos.ActivityRequestDTO) (*dtos.ActivityResponseDTO, error) {
-// 	// Ambil data activity berdasarkan ID
-// 	activity, err := s.GetOne(id)
-// 	if err != nil {
-// 		if errors.Is(err, gorm.ErrRecordNotFound) {
-// 			return nil, errors.New("activity not found")
-// 		}
-// 		return nil, err // Error lain
-// 	}
+func (s *ActivityService) UpdateActivity(id, userId string, activityDTO *dtos.ActivityRequestDTO) (*dtos.ActivityResponseDTO, error) {
+	// Ambil data activity berdasarkan ID
+	activity, err := s.GetOne(id,userId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("activity not found")
+		}
+		return nil, err // Error lain
+	}
 
-// 	// Gabungkan data baru dengan data lama
-// 	updatedModel := mappers.MapRequestToActivityModel(activityDTO)
-// 	updatedModel.ID = activity.ID // Tetap gunakan ID lama
+	
 
-// 	// Perbarui data di repository
-// 	updatedData, err := s.repo.UpdateDepartment(updatedModel)
-// 	if err != nil {
-// 		return nil, err // Error saat update
-// 	}
+	// Perbarui data di repository
+	updatedData, err := s.repo.UpdateDepartment(updatedModel)
+	if err != nil {
+		return nil, err // Error saat update
+	}
 
-// 	// Map hasil ke DTO respons
-// 	return mappers.MapActivityModelToResponse(updatedData), nil
-// }
+	// Map hasil ke DTO respons
+	return mappers.MapActivityModelToResponse(updatedData), nil
+}
 
 // func (s *DepartmentService) UpdateMassDepartmentByEmail(oldEmail string, newEmail string) (string, error) {
 // 	activities, err := s.repo.GetAllWithoutPaginationById(oldEmail)

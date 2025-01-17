@@ -23,7 +23,7 @@ func SeedActivityTypes(db *gorm.DB) {
 
 	for _, activityType := range activityTypes {
 		var existing models.ActivityType
-		if err := db.Where("name = ?", activityType.ActivityType).First(&existing).Error; err != nil {
+		if err := db.Where("activity_type = ?", activityType.ActivityType).First(&existing).Error; err != nil {
 			if err := db.Create(&activityType).Error; err != nil {
 				log.Printf("Failed to seed activity: %v", activityType.ActivityType)
 			} else {

@@ -1,5 +1,7 @@
 package dtos
 
 type ActivityRequestDTO struct {
-	Name string `json:"name" binding:"required,min=4,max=33"`
+	ActivityType      string `json:"activityType"`
+	DoneAt            string `json:"doneAt"`
+	DurationInMinutes int    `json:"durationInMinutes"`
 }

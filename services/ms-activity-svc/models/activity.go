@@ -12,9 +12,9 @@ type Activity struct {
 	UserID            string `gorm:"type:varchar(255);not null"`
 	ActivityTypeID    string `gorm:"type:varchar(255);not null"`
 	ActivityTypeName  string `gorm:"type:varchar(100);null"`
-	CaloriesBurned    string `gorm:"type:varchar(20);not null"`
-	DurationInMinutes string `gorm:"type:varchar(20);not null"`
-	DoneAt            time.Time
+	CaloriesBurned    int
+	DurationInMinutes int
+	DoneAt            string `gorm:"type:varchar(100);null"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	DeletedAt         gorm.DeletedAt `gorm:"index"`

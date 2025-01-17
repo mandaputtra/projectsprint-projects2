@@ -10,6 +10,7 @@ import (
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/config"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/controllers"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/database"
+	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/middlewares"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/models"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/repositories"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/services"
@@ -54,18 +55,23 @@ func setupRouter(
 
 	r := gin.Default()
 	v1 := r.Group("/v1")
-	// v1.Use(middlewares.JWTAuthMiddleware())
-	// Routes untuk activity
-	activity := v1.Group("/activity")
-	{
-		activity.GET("/", activityController.GetAllActivities)
-	}
 
-	// Routes untuk activity-type
-	activityTypes := v1.Group("/activity-type")
+	// Routes untuk activity
+	v1.Use(middlewares.JWTAuthMiddleware())
 	{
-		activityTypes.GET("/", activityTypeController.GetAllActivityType)
-		activityTypes.GET("/:id", activityTypeController.GetOneActivityType)
+		activity := v1.Group("/activity")
+		{
+			activity.GET("/", activityController.GetAllActivities)
+			activity.GET("/:id", activityController.GetOneActivity)
+			activity.POST("/", activityController.Create)
+		}
+
+		// Routes untuk activity-type
+		activityTypes := v1.Group("/activity-type")
+		{
+			activityTypes.GET("/", activityTypeController.GetAllActivityType)
+			activityTypes.GET("/:id", activityTypeController.GetOneActivityType)
+		}
 	}
 
 	return r
@@ -84,12 +90,13 @@ func main() {
 	//seeder
 	database.SeedActivityTypes(db)
 
-	activityRepo := repositories.NewActivityRepository(db)
-	activityService := services.NewActivityService(activityRepo)
-	activityController := controllers.NewActivityController(activityService)
-
 	activityTypeRepo := repositories.NewActivityTypeRepository(db)
+	activityRepo := repositories.NewActivityRepository(db)
+
 	activityTypeService := services.NewActivityTypeService(activityTypeRepo)
+	activityService := services.NewActivityService(activityRepo, activityTypeRepo)
+
+	activityController := controllers.NewActivityController(activityService)
 	activityTypeController := controllers.NewActivityTypeController(activityTypeService)
 
 	r := setupRouter(activityController, activityTypeController)
