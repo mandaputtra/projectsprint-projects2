@@ -20,14 +20,13 @@ type UserCreateOrLoginRequest struct {
 }
 
 type UserUpdateRequest struct {
-	Name        string  `json:"name" binding:"min=4,max=52"`
-	Email       string  `json:"email" binding:"required,email"`
-	Preferences string  `json:"userImageUri" binding:"required,uri"`
-	WeightUnit  string  `json:"companyName" binding:"min=4,max=52"`
-	HeightUnit  string  `json:"companyImageUri" binding:"required,uri"`
-	Height      float64 `json:"height" binding:"required"`
-	Weight      float64 `json:"weight" binding:"required"`
-	ImageUri    string  `json:"imageUri" binding:"required,uri"`
+	Preferences string  `json:"preferences" binding:"required,oneof=CARDIO WEIGHT"`
+	WeightUnit  string  `json:"weightUnit" binding:"required,oneof=KG LBS"`
+	HeightUnit  string  `json:"heightUnit" binding:"required,oneof=CM INCH"`
+	Height      float64 `json:"height" binding:"required,min=3,max=250"`
+	Weight      float64 `json:"weight" binding:"required,min=10,max=1000"`
+	Name        string  `json:"name" binding:"omitempty,min=4,max=60"`
+	ImageUri    string  `json:"imageUri" binding:"omitempty,uri"`
 }
 
 type APIEnv struct {
@@ -153,10 +152,10 @@ func (a *APIEnv) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	email := c.GetString("email")
+	id := c.GetString("id")
 
 	var user database.User
-	if err := db.Where("email = ?", email).First(&user).Error; err != nil {
+	if err := db.Where("id = ?", id).First(&user).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
