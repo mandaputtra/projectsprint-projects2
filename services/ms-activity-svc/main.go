@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/config"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/controllers"
+	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/database"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/models"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/repositories"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/services"
@@ -41,25 +42,30 @@ func connectDatabase(env config.Environment) *gorm.DB {
 
 	// Migrations
 	db.AutoMigrate(&models.Activity{})
+	db.AutoMigrate(&models.ActivityType{})
 
 	return db
 }
 
-func setupRouter(activityController *controllers.ActivityController) *gin.Engine {
+func setupRouter(
+	activityController *controllers.ActivityController,
+	activityTypeController *controllers.ActivityTypeController,
+) *gin.Engine {
 
 	r := gin.Default()
 	v1 := r.Group("/v1")
 	// v1.Use(middlewares.JWTAuthMiddleware())
+	// Routes untuk activity
+	activity := v1.Group("/activity")
 	{
-		departments := v1.Group("/activity")
-		{
-			// departments.POST("/", departmentController.Create)
-			departments.GET("/", activityController.GetAllDepartments)
-			// departments.GET("/:id", departmentController.GetOneDepartment)
-			// departments.PATCH("/:id", departmentController.UpdateOneDepartment)
-			// departments.DELETE("/:id", departmentController.DeleteOneDepartment)
-			// departments.PATCH("/update-department-id", departmentController.UpdateDepartmentId)
-		}
+		activity.GET("/", activityController.GetAllActivities)
+	}
+
+	// Routes untuk activity-type
+	activityTypes := v1.Group("/activity-type")
+	{
+		activityTypes.GET("/", activityTypeController.GetAllActivityType)
+		activityTypes.GET("/:id", activityTypeController.GetOneActivityType)
 	}
 
 	return r
@@ -75,10 +81,17 @@ func main() {
 	// connect databases
 	db := connectDatabase(cfg)
 
+	//seeder
+	database.SeedActivityTypes(db)
+
 	activityRepo := repositories.NewActivityRepository(db)
 	activityService := services.NewActivityService(activityRepo)
 	activityController := controllers.NewActivityController(activityService)
 
-	r := setupRouter(activityController)
+	activityTypeRepo := repositories.NewActivityTypeRepository(db)
+	activityTypeService := services.NewActivityTypeService(activityTypeRepo)
+	activityTypeController := controllers.NewActivityTypeController(activityTypeService)
+
+	r := setupRouter(activityController, activityTypeController)
 	r.Run(":8080")
 }
