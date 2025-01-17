@@ -23,11 +23,17 @@ echo "Start initialize database users for postgres"
 
 # Ceate schemas
 docker exec -i $docker_postgresql_hostname \
-  psql -U postgres -d projectsone -c "CREATE SCHEMA activities; 
+  psql -U postgres -d projectsone -c "CREATE SCHEMA activities;
+  CREATE SCHEMA logs;
+  CREATE SCHEMA users;
 
   CREATE ROLE activities_user WITH LOGIN PASSWORD '$service_password';
+  CREATE ROLE logs_user WITH LOGIN PASSWORD '$service_password';
+  CREATE ROLE users_user WITH LOGIN PASSWORD '$service_password';
 
   GRANT ALL PRIVILEGES ON SCHEMA activities TO activities_user;
+  GRANT ALL PRIVILEGES ON SCHEMA logs TO logs_user;
+  GRANT ALL PRIVILEGES ON SCHEMA users TO users_user;
   "
 
 echo "Success create database and users"
