@@ -1,6 +1,6 @@
 package dtos
 
 type ActivityResponseDTO struct {
-	ID   string `json:"departmentId"`
+	ID   string `json:"id"`
 	Name string `json:"name"`
 }

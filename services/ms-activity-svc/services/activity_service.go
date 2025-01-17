@@ -21,9 +21,9 @@ func NewActivityService(repo *repositories.ActivityRepository) *ActivityService 
 	}
 }
 
-// func (s *DepartmentService) Create(departmentReqDTO *dtos.ActivityRequestDTO, ctx *gin.Context) (*dtos.ActivityResponseDTO, error) {
+// func (s *DepartmentService) Create(activityReqDTO *dtos.ActivityRequestDTO, ctx *gin.Context) (*dtos.ActivityResponseDTO, error) {
 
-// 	newDepartment := mappers.MapRequestToActivityModel(departmentReqDTO)
+// 	newDepartment := mappers.MapRequestToActivityModel(activityReqDTO)
 
 // 	email, ok := ctx.Get("email")
 // 	if !ok {
@@ -38,53 +38,53 @@ func NewActivityService(repo *repositories.ActivityRepository) *ActivityService 
 // 	randomString := utils.GenerateRandomString(5)
 // 	newDepartment.ID = emailStr + "-" + randomString
 
-// 	department, err := s.repo.Create(newDepartment)
+// 	activity, err := s.repo.Create(newDepartment)
 // 	if err != nil {
 // 		return nil, err
 // 	}
 
-// 	departmentResponseDTO := mappers.MapActivityModelToResponse(department)
+// 	activityResponseDTO := mappers.MapActivityModelToResponse(activity)
 
-// 	return departmentResponseDTO, nil
+// 	return activityResponseDTO, nil
 // }
 
 func (s *ActivityService) GetAll(limit, offset int) ([]*dtos.ActivityResponseDTO, error) {
-	departments, err := s.repo.GetAll(limit, offset)
+	activities, err := s.repo.GetAll(limit, offset)
 	if err != nil {
 		return nil, err
 	}
 
 	// Map models to response DTOs
-	var departmentDTOs []*dtos.ActivityResponseDTO
-	for _, department := range departments {
-		departmentDTOs = append(departmentDTOs, mappers.MapActivityModelToResponse(department))
+	var activityDTOs []*dtos.ActivityResponseDTO
+	for _, activity := range activities {
+		activityDTOs = append(activityDTOs, mappers.MapActivityModelToResponse(activity))
 	}
 
-	return departmentDTOs, nil
+	return activityDTOs, nil
 }
 
 // func (s *DepartmentService) GetOne(id string) (*dtos.ActivityResponseDTO, error) {
-// 	department, err := s.repo.GetOne(id)
+// 	activity, err := s.repo.GetOne(id)
 // 	if err != nil {
 // 		return nil, err
 // 	}
 
-// 	return mappers.MapActivityModelToResponse(department), nil
+// 	return mappers.MapActivityModelToResponse(activity), nil
 // }
 
-// func (s *DepartmentService) UpdateOneDepartment(id string, departmentDTO *dtos.ActivityRequestDTO) (*dtos.ActivityResponseDTO, error) {
-// 	// Ambil data department berdasarkan ID
-// 	department, err := s.GetOne(id)
+// func (s *DepartmentService) UpdateOneDepartment(id string, activityDTO *dtos.ActivityRequestDTO) (*dtos.ActivityResponseDTO, error) {
+// 	// Ambil data activity berdasarkan ID
+// 	activity, err := s.GetOne(id)
 // 	if err != nil {
 // 		if errors.Is(err, gorm.ErrRecordNotFound) {
-// 			return nil, errors.New("department not found")
+// 			return nil, errors.New("activity not found")
 // 		}
 // 		return nil, err // Error lain
 // 	}
 
 // 	// Gabungkan data baru dengan data lama
-// 	updatedModel := mappers.MapRequestToActivityModel(departmentDTO)
-// 	updatedModel.ID = department.ID // Tetap gunakan ID lama
+// 	updatedModel := mappers.MapRequestToActivityModel(activityDTO)
+// 	updatedModel.ID = activity.ID // Tetap gunakan ID lama
 
 // 	// Perbarui data di repository
 // 	updatedData, err := s.repo.UpdateDepartment(updatedModel)
@@ -97,21 +97,21 @@ func (s *ActivityService) GetAll(limit, offset int) ([]*dtos.ActivityResponseDTO
 // }
 
 // func (s *DepartmentService) UpdateMassDepartmentByEmail(oldEmail string, newEmail string) (string, error) {
-// 	departments, err := s.repo.GetAllWithoutPaginationById(oldEmail)
+// 	activities, err := s.repo.GetAllWithoutPaginationById(oldEmail)
 // 	if err != nil {
 // 		return "", err
 // 	}
 
-// 	for _, department := range departments {
+// 	for _, activity := range activities {
 // 		randomString := utils.GenerateRandomString(5)
-// 		oldId := department.ID
-// 		department.ID = newEmail + "-" + randomString
-// 		_, err := s.repo.UpdateDepartmentId(oldId, department)
+// 		oldId := activity.ID
+// 		activity.ID = newEmail + "-" + randomString
+// 		_, err := s.repo.UpdateDepartmentId(oldId, activity)
 // 		if err != nil {
-// 			return "", fmt.Errorf("failed to update department with old ID %s: %w", oldId, err)
+// 			return "", fmt.Errorf("failed to update activity with old ID %s: %w", oldId, err)
 // 		}
 // 	}
-// 	return "All departments updated successfully", nil
+// 	return "All activities updated successfully", nil
 // }
 
 // func (s *DepartmentService) DeleteById(id string) error {

@@ -43,7 +43,7 @@ func NewActivityController(service *services.ActivityService) *ActivityControlle
 // 	ctx.JSON(http.StatusCreated, createdDepartment)
 // }
 
-func (c *ActivityController) GetAllDepartments(ctx *gin.Context) {
+func (c *ActivityController) GetAllActivities(ctx *gin.Context) {
 	limitStr := ctx.DefaultQuery("limit", "10")
 	offsetStr := ctx.DefaultQuery("offset", "0")
 
