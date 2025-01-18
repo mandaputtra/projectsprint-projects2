@@ -65,8 +65,8 @@ func (a *APIEnv) Login(c *gin.Context) {
 		return
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": user.Email,
-		"id":    user.ID,
+		"email":  user.Email,
+		"userId": user.ID,
 	})
 	tokenString, err := token.SignedString([]byte(
 		cfg.JWT_SECRET,
@@ -108,8 +108,8 @@ func (a *APIEnv) Register(c *gin.Context) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": user.Email,
-		"id":    user.ID,
+		"email":  user.Email,
+		"userId": user.ID,
 	})
 
 	tokenString, err := token.SignedString([]byte(cfg.JWT_SECRET))
@@ -127,7 +127,7 @@ func (a *APIEnv) Register(c *gin.Context) {
 
 func (a *APIEnv) GetUser(c *gin.Context) {
 	db := a.DB
-	id := c.GetString("id")
+	id := c.GetString("userId")
 
 	var user database.User
 	db.Where("id = ?", id).First(&user)
@@ -152,7 +152,7 @@ func (a *APIEnv) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	id := c.GetString("id")
+	id := c.GetString("userId")
 
 	var user database.User
 	if err := db.Where("id = ?", id).First(&user).Error; err != nil {
