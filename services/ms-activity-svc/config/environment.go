@@ -10,6 +10,7 @@ type Environment struct {
 	DATABASE_PORT     string
 	DATABASE_SCHEMA   string
 	JWT_SECRET_KEY    string
+	PORT              string
 }
 
 func EnvironmentConfig() Environment {
@@ -21,5 +22,6 @@ func EnvironmentConfig() Environment {
 		DATABASE_PORT:     os.Getenv("DATABASE_PORT"),
 		DATABASE_SCHEMA:   os.Getenv("DATABASE_SCHEMA"),
 		JWT_SECRET_KEY:    os.Getenv("JWT_SECRET_KEY"),
+		PORT:              os.Getenv("PORT"),
 	}
 }
