@@ -20,13 +20,14 @@ type UserCreateOrLoginRequest struct {
 }
 
 type UserUpdateRequest struct {
-	Preferences string  `json:"preferences" binding:"required,oneof=CARDIO WEIGHT"`
-	WeightUnit  string  `json:"weightUnit" binding:"required,oneof=KG LBS"`
-	HeightUnit  string  `json:"heightUnit" binding:"required,oneof=CM INCH"`
-	Height      float64 `json:"height" binding:"required,min=3,max=250"`
-	Weight      float64 `json:"weight" binding:"required,min=10,max=1000"`
-	Name        string  `json:"name" binding:"omitempty,min=4,max=60"`
-	ImageUri    string  `json:"imageUri" binding:"omitempty,uri"`
+	Email      string  `json:"email"`
+	Preference string  `json:"preference" binding:"required,oneof=CARDIO WEIGHT"`
+	WeightUnit string  `json:"weightUnit" binding:"required,oneof=KG LBS"`
+	HeightUnit string  `json:"heightUnit" binding:"required,oneof=CM INCH"`
+	Height     float64 `json:"height" binding:"required,min=3,max=250"`
+	Weight     float64 `json:"weight" binding:"required,min=10,max=1000"`
+	Name       string  `json:"name" binding:"omitempty,min=2,max=60"`
+	ImageUri   string  `json:"imageUri" binding:"omitempty,uri"`
 }
 
 type APIEnv struct {
@@ -55,10 +56,11 @@ func (a *APIEnv) Login(c *gin.Context) {
 	}
 
 	db.Where("email =?", userRequest.Email).First(&user)
-	if user.ID == 0 {
+	if user.ID == "" {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid email or password"})
 		return
 	}
+
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userRequest.Password))
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
@@ -133,12 +135,13 @@ func (a *APIEnv) GetUser(c *gin.Context) {
 	db.Where("id = ?", id).First(&user)
 
 	c.JSON(http.StatusOK, gin.H{
-		"preference": user.Preferences,
+		"preference": user.Preference,
 		"weightUnit": user.WeightUnit,
 		"heightUnit": user.HeightUnit,
 		"weight":     user.Weight,
 		"height":     user.Height,
 		"name":       user.Name,
+		"email":      user.Email,
 		"imageUri":   user.ImageUri,
 	})
 }
@@ -160,18 +163,25 @@ func (a *APIEnv) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if user.Name != "" {
+	if userRequest.Name != "" {
 		user.Name = userRequest.Name
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot have empty name field"})
+		return
 	}
 
-	if user.ImageUri != "" {
+	if userRequest.ImageUri != "" {
 		if !validateURIWithTLD(userRequest.ImageUri) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "bad image uri url"})
 			return
 		}
+		user.ImageUri = userRequest.ImageUri
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot have empty imageUri field"})
+		return
 	}
 
-	user.Preferences = userRequest.Preferences
+	user.Preference = userRequest.Preference
 	user.WeightUnit = userRequest.WeightUnit
 	user.HeightUnit = userRequest.HeightUnit
 	user.Weight = userRequest.Weight
@@ -187,12 +197,13 @@ func (a *APIEnv) UpdateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"preference": user.Preferences,
+		"preference": user.Preference,
 		"weightUnit": user.WeightUnit,
 		"heightUnit": user.HeightUnit,
 		"weight":     user.Weight,
 		"height":     user.Height,
 		"name":       user.Name,
+		"email":      user.Email,
 		"imageUri":   user.ImageUri,
 	})
 }

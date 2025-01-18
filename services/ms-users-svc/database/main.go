@@ -2,30 +2,39 @@ package database
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/google/uuid"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-users-svc/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 type User struct {
-	gorm.Model
-	Email       string `gorm:"unique;not null"`
-	Password    string `gorm:"not null"`
-	Preferences string
-	WeightUnit  string
-	HeightUnit  string
-	Weight      float64
-	Height      float64
-	Name        string
-	ImageUri    string
+	ID         string `gorm:"primaryKey"`
+	Email      string `gorm:"unique;not null"`
+	Password   string `gorm:"not null"`
+	Preference string
+	WeightUnit string
+	HeightUnit string
+	Weight     float64
+	Height     float64
+	Name       string
+	ImageUri   string
+}
+
+func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
+	if user.ID == "" {
+		user.ID = uuid.NewString()
+	}
+	return
 }
 
 // Setup database
 var db *gorm.DB
 
 func ConnectDatabase(env config.Environment) *gorm.DB {
-	fmt.Println("Connect to database ....")
+	log.Println("Connect to database ....")
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable search_path=%s",
 		env.DATABASE_HOST,
@@ -45,7 +54,7 @@ func ConnectDatabase(env config.Environment) *gorm.DB {
 	var result string
 	db.Raw("SELECT 1;").Scan(&result)
 
-	fmt.Printf("Connection successfull. Result from test SQL: %s\n", result)
+	log.Printf("Connection successfull. Result from test SQL: %s\n", result)
 
 	// Migrations
 	db.AutoMigrate(&User{})
