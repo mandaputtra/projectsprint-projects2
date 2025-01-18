@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/dtos"
@@ -43,33 +42,16 @@ func (c *ActivityController) Create(ctx *gin.Context) {
 }
 
 func (c *ActivityController) GetAllActivities(ctx *gin.Context) {
-	limitStr := ctx.DefaultQuery("limit", "10")
-	offsetStr := ctx.DefaultQuery("offset", "0")
-	userId, _ := ctx.Get("userId")
+	// Ambil query yang sudah divalidasi dari context
+	validatedQuery := ctx.MustGet("validatedQuery").(map[string]interface{})
 
-	limit, err := strconv.Atoi(limitStr)
+	// Panggil service dengan parameter
+	activities, err := c.service.GetAll(validatedQuery)
 	if err != nil {
-		// Jika terjadi error, beri nilai default
-		limit = 10
-	}
-
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil {
-		// Jika terjadi error, beri nilai default
-		offset = 0
-	}
-
-	activities, err := c.service.GetAll(limit, offset, userId.(string))
-
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch activities"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if len(activities) <= 0 {
-		ctx.JSON(http.StatusNoContent, gin.H{})
-		return
-	}
 	ctx.JSON(http.StatusOK, activities)
 }
 

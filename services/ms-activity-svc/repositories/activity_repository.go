@@ -22,25 +22,45 @@ func (r *ActivityRepository) Create(activity *models.Activity) (*models.Activity
 	return activity, nil
 }
 
-func (r *ActivityRepository) GetAll(limit, offset int, userId string) ([]*models.Activity, error) {
+func (r *ActivityRepository) GetAll(params map[string]interface{}) ([]*models.Activity, error) {
 	var activities []*models.Activity
-	query := r.db.Limit(limit).Offset(offset)
+	query := r.db.Model(&models.Activity{})
 
-	err := query.Find(&activities, "user_id = ?", userId).Error
-	return activities, err
+	if activityType, ok := params["activityType"].(string); ok && activityType != "" {
+		query = query.Where("activity_type_name = ?", activityType)
+	}
+
+	// if doneAtFrom, ok := params["doneAtFrom"].(time.Time); ok {
+	// 	doneAtFrom = doneAtFrom.UTC()
+	// 	query = query.Where("done_at >= ?", doneAtFrom)
+	// }
+
+	// if doneAtTo, ok := params["doneAtTo"].(time.Time); ok {
+	// 	doneAtTo = doneAtTo.UTC()
+	// 	query = query.Where("done_at <= ?", doneAtTo)
+	// }
+
+	if min, ok := params["caloriesBurnedMin"].(int); ok && min > 0 {
+		query = query.Where("calories_burned >= ?", min)
+	}
+
+	if max, ok := params["caloriesBurnedMax"].(int); ok && max > 0 {
+		query = query.Where("calories_burned <= ?", max)
+	}
+
+	// Handle limit and offset
+	limit := params["limit"].(int)
+	offset := params["offset"].(int)
+	query = query.Limit(limit).Offset(offset)
+	query = query.Debug()
+
+	// Execute query
+	if err := query.Find(&activities).Error; err != nil {
+		return nil, err
+	}
+
+	return activities, nil
 }
-
-// func (r *ActivityRepository) GetAllWithoutPaginationById(email string) ([]*models.Activity, error) {
-// 	var activitys []*models.Activity
-
-// 	// Lakukan query untuk mencari data dengan ID yang sesuai
-// 	err := r.db.Where("id ILIKE ?", "%"+email+"%").Find(&activitys).Error
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return activitys, nil
-// }
 
 func (r *ActivityRepository) GetOne(id, userId string) (*models.Activity, error) {
 	var activity models.Activity

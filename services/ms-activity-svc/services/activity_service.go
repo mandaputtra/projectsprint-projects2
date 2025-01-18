@@ -6,6 +6,7 @@ import (
 
 	// "github.com/gin-gonic/gin"
 	"errors"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/dtos"
@@ -37,6 +38,7 @@ func (s *ActivityService) Create(activityReqDTO *dtos.ActivityRequestDTO, ctx *g
 	}
 
 	userId, _ := ctx.Get("userId")
+	doneAt, _ := time.Parse(time.RFC3339, activityReqDTO.DoneAt)
 
 	newActivityModel := &models.Activity{
 		UserID:            userId.(string),
@@ -44,7 +46,7 @@ func (s *ActivityService) Create(activityReqDTO *dtos.ActivityRequestDTO, ctx *g
 		ActivityTypeName:  activityType.ActivityType,
 		CaloriesBurned:    activityType.Calories * activityReqDTO.DurationInMinutes,
 		DurationInMinutes: activityReqDTO.DurationInMinutes,
-		DoneAt:            activityReqDTO.DoneAt,
+		DoneAt:            doneAt,
 	}
 
 	activity, err := s.repo.Create(newActivityModel)
@@ -52,29 +54,20 @@ func (s *ActivityService) Create(activityReqDTO *dtos.ActivityRequestDTO, ctx *g
 		return nil, err
 	}
 
-	activityResponseDTO := &dtos.ActivityResponseDTO{
-		ActivityId:        activity.ID,
-		ActivityType:      activity.ActivityTypeName,
-		DoneAt:            activity.DoneAt,
-		DurationInMinutes: activity.DurationInMinutes,
-		CaloriesBurned:    activity.CaloriesBurned,
-		CreatedAt:         activity.CreatedAt.String(),
-		UpdatedAt:         activity.UpdatedAt.String(),
-	}
-
+	activityResponseDTO := mappers.MapActivityModelToResponse(activity)
 	return activityResponseDTO, nil
 }
 
-func (s *ActivityService) GetAll(limit, offset int, userId string) ([]*dtos.ActivityResponseDTO, error) {
-	activities, err := s.repo.GetAll(limit, offset, userId)
+func (s *ActivityService) GetAll(params map[string]interface{}) ([]*dtos.ActivityResponseDTO, error) {
+	// Ambil data dari repository
+	activities, err := s.repo.GetAll(params)
 	if err != nil {
 		return nil, err
 	}
 
-	// Map models to response DTOs
+	// Konversi model ke DTO menggunakan mapper
 	var activityDTOs []*dtos.ActivityResponseDTO
 	for _, activity := range activities {
-
 		activityDTOs = append(activityDTOs, mappers.MapActivityModelToResponse(activity))
 	}
 
@@ -105,6 +98,8 @@ func (s *ActivityService) UpdateActivity(id, userId string, activityDTO *dtos.Ac
 		return nil, err
 	}
 
+	doneAt, _ := time.Parse(time.RFC3339, activityDTO.DoneAt)
+
 	updateActivityModel := &models.Activity{
 		ID:                id,
 		UserID:            userId,
@@ -112,7 +107,7 @@ func (s *ActivityService) UpdateActivity(id, userId string, activityDTO *dtos.Ac
 		ActivityTypeName:  existingActivityType.ActivityType,
 		CaloriesBurned:    existingActivityType.Calories * activityDTO.DurationInMinutes,
 		DurationInMinutes: activityDTO.DurationInMinutes,
-		DoneAt:            activityDTO.DoneAt,
+		DoneAt:            doneAt,
 	}
 
 	updatedData, err := s.repo.UpdateActivity(updateActivityModel)
