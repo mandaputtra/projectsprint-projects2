@@ -16,6 +16,7 @@ import (
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/services"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func connectDatabase(env config.Environment) *gorm.DB {
@@ -30,7 +31,9 @@ func connectDatabase(env config.Environment) *gorm.DB {
 		env.DATABASE_SCHEMA,
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Warn),
+	})
 	if err != nil {
 		panic("Failed to connect to database")
 	}
@@ -61,9 +64,11 @@ func setupRouter(
 	{
 		activity := v1.Group("/activity")
 		{
-			activity.GET("/", activityController.GetAllActivities)
+			activity.GET("/", middlewares.ValidateGetAllActivitiesQuery(), activityController.GetAllActivities)
 			activity.GET("/:id", activityController.GetOneActivity)
 			activity.POST("/", activityController.Create)
+			activity.PATCH("/:id", activityController.UpdateActivity)
+			activity.DELETE("/:id", activityController.DeleteOneActivity)
 		}
 
 		// Routes untuk activity-type

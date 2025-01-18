@@ -9,7 +9,7 @@ func MapActivityModelToResponse(activityModel *models.Activity) *dtos.ActivityRe
 	return &dtos.ActivityResponseDTO{
 		ActivityId:        activityModel.ID,
 		ActivityType:      activityModel.ActivityTypeName,
-		DoneAt:            activityModel.DoneAt,
+		DoneAt:            activityModel.DoneAt.String(),
 		DurationInMinutes: activityModel.DurationInMinutes,
 		CaloriesBurned:    activityModel.CaloriesBurned,
 		CreatedAt:         activityModel.CreatedAt.String(),
