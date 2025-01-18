@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/config"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/controllers"
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/database"
@@ -84,9 +82,6 @@ func setupRouter(
 
 func main() {
 	// Load .env
-	wd, _ := os.Getwd()
-	envpath := path.Join(wd, "services", "ms-activity-svc", ".env")
-	godotenv.Load(envpath)
 	cfg := config.EnvironmentConfig()
 
 	// connect databases
@@ -105,5 +100,5 @@ func main() {
 	activityTypeController := controllers.NewActivityTypeController(activityTypeService)
 
 	r := setupRouter(activityController, activityTypeController)
-	r.Run(":8080")
+	r.Run(":" + cfg.PORT)
 }
