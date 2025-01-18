@@ -38,8 +38,6 @@ func Authorization(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(tokenString)
-
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -54,7 +52,7 @@ func Authorization(c *gin.Context) {
 	}
 
 	c.Set("email", token.Claims.(jwt.MapClaims)["email"])
-	c.Set("userId", token.Claims.(jwt.MapClaims)["id"])
+	c.Set("userId", token.Claims.(jwt.MapClaims)["userId"])
 	c.Next()
 }
 

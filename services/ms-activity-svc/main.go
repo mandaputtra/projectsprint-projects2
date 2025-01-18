@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
@@ -18,7 +19,7 @@ import (
 )
 
 func connectDatabase(env config.Environment) *gorm.DB {
-	fmt.Println("Connect to database ....")
+	log.Println("Connect to database ....")
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable search_path=%s",
 		env.DATABASE_HOST,
@@ -40,7 +41,7 @@ func connectDatabase(env config.Environment) *gorm.DB {
 	var result string
 	db.Raw("SELECT 1;").Scan(&result)
 
-	fmt.Printf("Connection successfull. Result from test SQL: %s\n", result)
+	log.Printf("Connection successfull. Result from test SQL: %s\n", result)
 
 	// Migrations
 	db.AutoMigrate(&models.Activity{})
