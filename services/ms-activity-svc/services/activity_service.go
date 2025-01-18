@@ -5,6 +5,7 @@ import (
 	// "fmt"
 
 	// "github.com/gin-gonic/gin"
+
 	"errors"
 
 	"github.com/gin-gonic/gin"
@@ -91,8 +92,8 @@ func (s *ActivityService) GetOne(id, userId string) (*dtos.ActivityResponseDTO, 
 }
 
 func (s *ActivityService) UpdateActivity(id, userId string, activityDTO *dtos.ActivityRequestDTO) (*dtos.ActivityResponseDTO, error) {
-	// Ambil data activity berdasarkan ID
-	activity, err := s.GetOne(id,userId)
+	_, err := s.GetOne(id, userId)
+
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("activity not found")
@@ -100,36 +101,35 @@ func (s *ActivityService) UpdateActivity(id, userId string, activityDTO *dtos.Ac
 		return nil, err // Error lain
 	}
 
-	
-
-	// Perbarui data di repository
-	updatedData, err := s.repo.UpdateDepartment(updatedModel)
+	existingActivityType, err := s.activityTypeRepo.GetOneByName(activityDTO.ActivityType)
 	if err != nil {
-		return nil, err // Error saat update
+		return nil, err
+	}
+
+	updateActivityModel := &models.Activity{
+		ID:                id,
+		UserID:            userId,
+		ActivityTypeID:    existingActivityType.ID,
+		ActivityTypeName:  existingActivityType.ActivityType,
+		CaloriesBurned:    existingActivityType.Calories * activityDTO.DurationInMinutes,
+		DurationInMinutes: activityDTO.DurationInMinutes,
+		DoneAt:            activityDTO.DoneAt,
+	}
+
+	updatedData, err := s.repo.UpdateActivity(updateActivityModel)
+	if err != nil {
+		return nil, err
 	}
 
 	// Map hasil ke DTO respons
 	return mappers.MapActivityModelToResponse(updatedData), nil
 }
 
-// func (s *DepartmentService) UpdateMassDepartmentByEmail(oldEmail string, newEmail string) (string, error) {
-// 	activities, err := s.repo.GetAllWithoutPaginationById(oldEmail)
-// 	if err != nil {
-// 		return "", err
-// 	}
+func (s *ActivityService) DeleteById(id, userId string) error {
+	_, err := s.repo.GetOne(id, userId)
+	if err != nil {
+		return err
+	}
 
-// 	for _, activity := range activities {
-// 		randomString := utils.GenerateRandomString(5)
-// 		oldId := activity.ID
-// 		activity.ID = newEmail + "-" + randomString
-// 		_, err := s.repo.UpdateDepartmentId(oldId, activity)
-// 		if err != nil {
-// 			return "", fmt.Errorf("failed to update activity with old ID %s: %w", oldId, err)
-// 		}
-// 	}
-// 	return "All activities updated successfully", nil
-// }
-
-// func (s *DepartmentService) DeleteById(id string) error {
-// 	return s.repo.DeleteById(id)
-// }
+	return s.repo.DeleteById(id)
+}

@@ -87,6 +87,7 @@ func (c *ActivityController) GetOneActivity(ctx *gin.Context) {
 
 func (c *ActivityController) UpdateActivity(ctx *gin.Context) {
 	id := ctx.Param("id")
+	userId, _ := ctx.Get("userId")
 	// Bind input dari request body ke DTO
 	var activityDTO dtos.ActivityRequestDTO
 	if err := ctx.ShouldBindJSON(&activityDTO); err != nil {
@@ -95,7 +96,7 @@ func (c *ActivityController) UpdateActivity(ctx *gin.Context) {
 	}
 
 	// Panggil service untuk update
-	updatedActivity, err := c.service.UpdateOneDepartment(id, &activityDTO)
+	updatedActivity, err := c.service.UpdateActivity(id, userId.(string), &activityDTO)
 	if err != nil {
 		if err.Error() == "activity not found" {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Activity with the given ID not found"})
@@ -110,39 +111,14 @@ func (c *ActivityController) UpdateActivity(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, updatedActivity)
 }
 
-// func (c *ActivityController) UpdateDepartmentId(ctx *gin.Context) {
-// 	var body map[string]interface{}
+func (c *ActivityController) DeleteOneActivity(ctx *gin.Context) {
+	id := ctx.Param("id")
+	userId, _ := ctx.Get("userId")
 
-// 	// Parse JSON ke map
-// 	if err := ctx.ShouldBindJSON(&body); err != nil {
-// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
-// 		return
-// 	}
-
-// 	_, err := c.service.UpdateMassDepartmentByEmail(body["oldEmail"].(string), body["newEmail"].(string))
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update department"})
-// 		return
-// 	}
-
-// 	ctx.JSON(http.StatusOK, body["oldEmail"])
-// }
-
-// func (c *ActivityController) DeleteOneDepartment(ctx *gin.Context) {
-// 	checkIdWithCredential(ctx)
-// 	if ctx.IsAborted() {
-// 		return
-// 	}
-
-// 	department, err := c.service.GetOne(id)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Department with the given ID not found"})
-// 	}
-
-// 	err = c.service.DeleteById(department.ID)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "delete is not successful"})
-// 		return
-// 	}
-// 	ctx.JSON(http.StatusOK, gin.H{"status": "delete is successful"})
-// }
+	err := c.service.DeleteById(id, userId.(string))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "delete is not successful"})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"status": "delete is successful"})
+}

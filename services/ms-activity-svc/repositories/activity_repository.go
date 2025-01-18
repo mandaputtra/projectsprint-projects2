@@ -51,35 +51,20 @@ func (r *ActivityRepository) GetOne(id, userId string) (*models.Activity, error)
 	return &activity, nil
 }
 
-// func (r *ActivityRepository) UpdateActivity(data *models.Activity) (*models.Activity, error) {
+func (r *ActivityRepository) UpdateActivity(data *models.Activity) (*models.Activity, error) {
 
-// 	updateErr := r.db.Model(&models.Activity{}).
-// 		Where("id = ?", data.ID).
-// 		Updates(data).
-// 		First(data).Error
+	updateErr := r.db.Model(&models.Activity{}).
+		Where("id = ?", data.ID).
+		Updates(data).
+		First(data).Error
 
-// 	if updateErr != nil {
-// 		return nil, updateErr
-// 	}
-// 	return data, nil
-// }
+	if updateErr != nil {
+		return nil, updateErr
+	}
+	return data, nil
+}
 
-// func (r *ActivityRepository) UpdateActivityId(id string, data *models.Activity) (*models.Activity, error) {
-// 	updateErr := r.db.Model(&models.Activity{}).Where("id = ?", id).Updates(data).First(data).Error
-
-// 	if updateErr != nil {
-// 		return nil, updateErr
-// 	}
-// 	return data, nil
-// }
-
-// func (r *ActivityRepository) DeleteById(id string) error {
-
-// 	activity, err := r.GetOne(id)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	deleteErr := r.db.Delete(activity).Error
-// 	return deleteErr
-// }
+func (r *ActivityRepository) DeleteById(id string) error {
+	deleteErr := r.db.Where("id = ? ", id).Delete(&models.Activity{}).Error
+	return deleteErr
+}

@@ -64,6 +64,8 @@ func setupRouter(
 			activity.GET("/", activityController.GetAllActivities)
 			activity.GET("/:id", activityController.GetOneActivity)
 			activity.POST("/", activityController.Create)
+			activity.PATCH("/:id", activityController.UpdateActivity)
+			activity.DELETE("/:id", activityController.DeleteOneActivity)
 		}
 
 		// Routes untuk activity-type
