@@ -54,6 +54,7 @@ func Authorization(c *gin.Context) {
 	}
 
 	c.Set("email", token.Claims.(jwt.MapClaims)["email"])
+	c.Set("userId", token.Claims.(jwt.MapClaims)["id"])
 	c.Next()
 }
 

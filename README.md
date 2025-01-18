@@ -11,8 +11,9 @@
 To run this project, you need to run it per services example :
 
 ```bash
-docker compose up -d # run databases
-go run ./services/ms-user-svc
+make initialize
+cd services/<your service>
+go run .
 ```
 
 ## Running Test
@@ -20,7 +21,8 @@ go run ./services/ms-user-svc
 You can run test per services by using this command
 
 ```bash
-go test ./services/ms-user-svc
+cd services/<your service>
+go test .
 ```
 
 ## How to create services/libs?

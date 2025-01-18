@@ -8,9 +8,9 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - '5432:5432'
+      - "5432:5432"
     healthcheck:
-      test: ['CMD', 'pg_isready', '-U', 'postgres']
+      test: ["CMD", "pg_isready", "-U", "postgres"]
     environment:
       - POSTGRES_DB=projectsone
       - POSTGRES_USER=postgres
