@@ -13,7 +13,7 @@ type Activity struct {
 	ActivityTypeID    string `gorm:"type:varchar(255);not null"`
 	ActivityTypeName  string `gorm:"type:varchar(100);null"`
 	CaloriesBurned    int
-	DurationInMinutes int
+	DurationInMinutes int `gorm:"default:1"`
 	DoneAt            time.Time
 	CreatedAt         time.Time
 	UpdatedAt         time.Time

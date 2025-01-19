@@ -90,8 +90,6 @@ func (c *ActivityController) UpdateActivity(ctx *gin.Context) {
 		return
 	}
 
-	id := ctx.Param("id")
-	userId, _ := ctx.Get("userId")
 	// Bind input dari request body ke DTO
 	var activityDTO dtos.ActivityRequestDTO
 	if err := ctx.ShouldBindJSON(&activityDTO); err != nil {
@@ -105,6 +103,9 @@ func (c *ActivityController) UpdateActivity(ctx *gin.Context) {
 		})
 		return
 	}
+
+	id := ctx.Param("id")
+	userId, _ := ctx.Get("userId")
 
 	// Panggil service untuk update
 	updatedActivity, err := c.service.UpdateActivity(id, userId.(string), &activityDTO)
