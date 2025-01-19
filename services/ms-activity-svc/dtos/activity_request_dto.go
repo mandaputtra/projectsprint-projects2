@@ -8,21 +8,32 @@ import (
 )
 
 type ActivityRequestDTO struct {
-	ActivityType      string `json:"activityType"`
-	DoneAt            string `json:"doneAt"`
-	DurationInMinutes int    `json:"durationInMinutes"`
+	ActivityType      string `json:"activityType" binding:"required"`
+	DoneAt            string `json:"doneAt" binding:"required"`
+	DurationInMinutes int    `json:"durationInMinutes" binding:"omitempty"`
 }
-
-var activityTypes = []string{"Walking", "Yoga", "Stretching", "Cycling", "Swimming", "Dancing", "Hiking", "Running", "HIIT", "JumpRope"}
 
 func ValidateActivityRequest(dto ActivityRequestDTO) error {
 	// Validasi activityType
-	if dto.ActivityType == "" {
-		return errors.New("activityType is required")
-	}
-	if !contains(activityTypes, dto.ActivityType) {
-		return fmt.Errorf("activityType must be one of %v", activityTypes)
-	}
+    if dto.ActivityType == "" {
+        return errors.New("activityType is required")
+    }
+    
+    // Cek apakah activityType valid dengan membandingkan ke daftar ActivityTypeDTO
+    isValidActivity := false
+    for _, activity := range ActivityValues {
+        if activity.Name == dto.ActivityType {
+            isValidActivity = true
+            break
+        }
+    }
+    if !isValidActivity {
+        validActivities := make([]string, len(ActivityValues))
+        for i, activity := range ActivityValues {
+            validActivities[i] = activity.Name
+        }
+        return fmt.Errorf("activityType must be one of %v", validActivities)
+    }
 
 	// Validasi doneAt
 	if dto.DoneAt == "" {
@@ -40,14 +51,7 @@ func ValidateActivityRequest(dto ActivityRequestDTO) error {
 	return nil
 }
 
-func contains(slice []string, item string) bool {
-	for _, v := range slice {
-		if v == item {
-			return true
-		}
-	}
-	return false
-}
+
 
 func isValidISODate(date string) bool {
 	isoDatePattern := `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$`
