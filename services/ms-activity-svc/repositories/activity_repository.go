@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"time"
+
 	"github.com/mandaputtra/projectsprint-projects2/services/ms-activity-svc/models"
 	"gorm.io/gorm"
 )
@@ -30,15 +32,15 @@ func (r *ActivityRepository) GetAll(params map[string]interface{}) ([]*models.Ac
 		query = query.Where("activity_type_name = ?", activityType)
 	}
 
-	// if doneAtFrom, ok := params["doneAtFrom"].(time.Time); ok {
-	// 	doneAtFrom = doneAtFrom.UTC()
-	// 	query = query.Where("done_at >= ?", doneAtFrom)
-	// }
+	if doneAtFrom, ok := params["doneAtFrom"].(time.Time); ok {
+		doneAtFrom = doneAtFrom.UTC()
+		query = query.Where("done_at >= ?", doneAtFrom)
+	}
 
-	// if doneAtTo, ok := params["doneAtTo"].(time.Time); ok {
-	// 	doneAtTo = doneAtTo.UTC()
-	// 	query = query.Where("done_at <= ?", doneAtTo)
-	// }
+	if doneAtTo, ok := params["doneAtTo"].(time.Time); ok {
+		doneAtTo = doneAtTo.UTC()
+		query = query.Where("done_at <= ?", doneAtTo)
+	}
 
 	if min, ok := params["caloriesBurnedMin"].(int); ok && min > 0 {
 		query = query.Where("calories_burned >= ?", min)

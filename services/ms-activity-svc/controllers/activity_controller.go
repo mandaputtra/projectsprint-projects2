@@ -19,6 +19,13 @@ func NewActivityController(service *services.ActivityService) *ActivityControlle
 }
 
 func (c *ActivityController) Create(ctx *gin.Context) {
+	if ctx.ContentType() != "application/json" {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid Content-Type, expected application/json",
+		})
+		return
+	}
+
 	var activityDTO dtos.ActivityRequestDTO
 
 	// Bind JSON request body ke struct department
@@ -29,9 +36,17 @@ func (c *ActivityController) Create(ctx *gin.Context) {
 		return
 	}
 
+	// Validasi ActivityRequestDTO
+	if err := dtos.ValidateActivityRequest(activityDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	createdActivity, err := c.service.Create(&activityDTO, ctx)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
+		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to create activity",
 		})
 		return
@@ -68,12 +83,26 @@ func (c *ActivityController) GetOneActivity(ctx *gin.Context) {
 }
 
 func (c *ActivityController) UpdateActivity(ctx *gin.Context) {
+	if ctx.ContentType() != "application/json" {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid Content-Type, expected application/json",
+		})
+		return
+	}
+
 	id := ctx.Param("id")
 	userId, _ := ctx.Get("userId")
 	// Bind input dari request body ke DTO
 	var activityDTO dtos.ActivityRequestDTO
 	if err := ctx.ShouldBindJSON(&activityDTO); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	if err := dtos.ValidateActivityRequest(activityDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
@@ -85,7 +114,7 @@ func (c *ActivityController) UpdateActivity(ctx *gin.Context) {
 			return
 		}
 		// Error lain saat update
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update Activity"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update Activity"})
 		return
 	}
 
@@ -98,9 +127,14 @@ func (c *ActivityController) DeleteOneActivity(ctx *gin.Context) {
 	userId, _ := ctx.Get("userId")
 
 	err := c.service.DeleteById(id, userId.(string))
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "delete is not successful"})
+	if err == nil {
+		ctx.JSON(http.StatusOK, gin.H{"status": "delete is successful"})
+		return
+	} else if err.Error() == "activity not found" {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Activity with the given ID not found"})
+		return
+	} else {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"status": "delete is successful"})
 }

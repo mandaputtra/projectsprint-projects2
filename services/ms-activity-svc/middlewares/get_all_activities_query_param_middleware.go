@@ -27,7 +27,7 @@ func ValidateGetAllActivitiesQuery() gin.HandlerFunc {
 		// Parse doneAtFrom
 		var doneAtFrom time.Time
 		if from := c.Query("doneAtFrom"); from != "" {
-			if parsedTime, err := time.Parse(time.RFC3339, from); err == nil {
+			if parsedTime, err := time.Parse(time.RFC3339Nano, from); err == nil {
 				doneAtFrom = parsedTime
 			}
 		} else {
@@ -38,7 +38,7 @@ func ValidateGetAllActivitiesQuery() gin.HandlerFunc {
 		// Parse doneAtTo
 		var doneAtTo time.Time
 		if to := c.Query("doneAtTo"); to != "" {
-			if parsedTime, err := time.Parse(time.RFC3339, to); err == nil {
+			if parsedTime, err := time.Parse(time.RFC3339Nano, to); err == nil {
 				doneAtTo = parsedTime
 			}
 		} else {

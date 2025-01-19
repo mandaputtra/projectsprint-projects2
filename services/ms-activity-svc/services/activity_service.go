@@ -30,7 +30,6 @@ func NewActivityService(repo *repositories.ActivityRepository, activityTypeRepo 
 }
 
 func (s *ActivityService) Create(activityReqDTO *dtos.ActivityRequestDTO, ctx *gin.Context) (*dtos.ActivityResponseDTO, error) {
-
 	activityType, err := s.activityTypeRepo.GetOneByName(activityReqDTO.ActivityType)
 
 	if err != nil {
@@ -38,7 +37,7 @@ func (s *ActivityService) Create(activityReqDTO *dtos.ActivityRequestDTO, ctx *g
 	}
 
 	userId, _ := ctx.Get("userId")
-	doneAt, _ := time.Parse(time.RFC3339, activityReqDTO.DoneAt)
+	doneAt, _ := time.Parse(time.RFC3339Nano, activityReqDTO.DoneAt)
 
 	newActivityModel := &models.Activity{
 		UserID:            userId.(string),
@@ -98,7 +97,7 @@ func (s *ActivityService) UpdateActivity(id, userId string, activityDTO *dtos.Ac
 		return nil, err
 	}
 
-	doneAt, _ := time.Parse(time.RFC3339, activityDTO.DoneAt)
+	doneAt, _ := time.Parse(time.RFC3339Nano, activityDTO.DoneAt)
 
 	updateActivityModel := &models.Activity{
 		ID:                id,
@@ -122,8 +121,16 @@ func (s *ActivityService) UpdateActivity(id, userId string, activityDTO *dtos.Ac
 func (s *ActivityService) DeleteById(id, userId string) error {
 	_, err := s.repo.GetOne(id, userId)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("activity not found")
+		}
 		return err
 	}
 
-	return s.repo.DeleteById(id)
+	err = s.repo.DeleteById(id)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
