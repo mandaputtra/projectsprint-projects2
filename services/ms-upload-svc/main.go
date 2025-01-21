@@ -56,6 +56,12 @@ func main() {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Hello, World!",
+		})
+	})
+
 	router.POST("/v1/file", utils.Authorization, func(c *gin.Context) {
 		file, err := c.FormFile("file")
 		if err != nil {
@@ -89,7 +95,6 @@ func main() {
 				"", // a token will be created when the session it's used.
 			),
 		})
-
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Failed to create AWS session",
@@ -104,7 +109,6 @@ func main() {
 			Key:    aws.String(file.Filename),
 			Body:   src,
 		})
-
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("Failed to upload file, %v", err),

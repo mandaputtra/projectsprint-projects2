@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
@@ -22,6 +23,12 @@ func setupRouter(db *gorm.DB) *gin.Engine {
 	}
 
 	r.Use(utils.CheckContentType)
+
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Hello, World!",
+		})
+	})
 
 	v1 := r.Group("/v1")
 	{
