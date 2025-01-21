@@ -21,7 +21,7 @@ import (
 func connectDatabase(env config.Environment) *gorm.DB {
 	log.Println("Connect to database ....")
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable search_path=%s",
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s search_path=%s",
 		env.DATABASE_HOST,
 		env.DATABASE_USER,
 		env.DATABASE_PASSWORD,

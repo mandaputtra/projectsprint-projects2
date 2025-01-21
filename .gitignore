@@ -2,3 +2,7 @@
 tmp/
 .DS_Store
 .DS_STORE
+*.tar
+ms-users-svc
+ms-upload-svc
+ms-activity-svc
